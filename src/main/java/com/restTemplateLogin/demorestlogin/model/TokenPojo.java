@@ -1,4 +1,4 @@
-package com.restTemplateLogin.demorestlogin;
+package com.restTemplateLogin.demorestlogin.model;
 
 public class TokenPojo {
 
