@@ -1,8 +1,10 @@
 package com.restTemplateLogin.demorestlogin.controller;
 
+import com.restTemplateLogin.demorestlogin.config.InterceptorHandler;
 import com.restTemplateLogin.demorestlogin.model.ResponseDto;
 import com.restTemplateLogin.demorestlogin.service.RestClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -22,10 +24,12 @@ import java.util.Collections;
 public class UserController {
 
     public static final String REST_SEND_MSG = "http://localhost:8095/soafwd/apipub/send";
-    static RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
     private RestClient restClient;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @RequestMapping(value = "/hello")
     public ResponseEntity<String> testpost(HttpServletRequest req) {
@@ -42,27 +46,21 @@ public class UserController {
    @PostMapping("/send")
    public ResponseEntity<ResponseDto> send(@RequestBody String message) throws NoSuchAlgorithmException {
 
-
        MessageDigest md = MessageDigest.getInstance("MD5");
        md.update(message.getBytes());
        String md5 = DatatypeConverter.printHexBinary(md.digest());
 
        System.out.println("Sending Message");
 
-       String authToken = "http://localhost:8090/getToken";
-
-       RestTemplate restTemplate = new RestTemplateBuilder(rt-> rt.getInterceptors().add((request, body, execution) -> {
-           request.getHeaders().add("Authorization", "Bearer "+ authToken);
-           return execution.execute(request, body);
-       })).build();
+       String authToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJrc2VpIiwiZXhwIjoxNjA2MjM1NzQzLCJpYXQiOjE2MDYyMzIxNDN9.jDdi_sHnwJFRYNEnCDEAabXDXquX6FKjyLkU7lMs6AM";
 
        HttpHeaders headers = new HttpHeaders();
-//       headers.add("Authorization", "Bearer " + authToken);
+       headers.add("Authorization", "Bearer " + authToken);
        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
        headers.setContentType(MediaType.TEXT_PLAIN);
 
        HttpEntity<String> entity = new HttpEntity<>("token", headers);
-       restTemplate.postForEntity(REST_SEND_MSG, entity, ResponseDto.class);
+       ResponseEntity<ResponseDto> resp = restTemplate.postForEntity(REST_SEND_MSG, entity, ResponseDto.class);
        try{
            return new ResponseEntity<ResponseDto>(new ResponseDto("SUCCESS", md5), HttpStatus.OK);
        }catch (HttpClientErrorException e){
